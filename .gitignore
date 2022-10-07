@@ -2,3 +2,7 @@ data.csv
 site_body/
 venv/
 __pycache__/
+.vscode/
+proposta.md
+data.csv
+demo1/
