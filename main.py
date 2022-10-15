@@ -12,6 +12,7 @@ import pandas as pd
 # Programa rodou em 64 seconds
 SAVE_DIRECTORY = 'data'
 settings = {
+    'LOG_LEVEL': 'INFO',
     'DEPTH_LIMIT': 2,
     'USER_AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)', 
     # descomentar aqui se usar o recurso de insert a cada x dados
@@ -19,24 +20,26 @@ settings = {
     'CONCURRENT_REQUESTS_PER_DOMAIN': 16, # default to 8
     # 'CONCURRENT_REQUESTS_PER_IP': 0, # default to 0
 
-    'LOG_LEVEL': 'INFO',
-    # 'COOKIES_ENABLED': False,
-    # 'SCHEDULER_PRIORITY_QUEUE': 'scrapy.pqueues.DownloaderAwarePriorityQueue',
-    # 'REACTOR_THREADPOOL_MAXSIZE': 20,
+    'ITEM_PIPELINES': {
+        'pipelines.LazyInsertPipeline': 300,
+    },
+    'COOKIES_ENABLED': False,
+    'SCHEDULER_PRIORITY_QUEUE': 'scrapy.pqueues.DownloaderAwarePriorityQueue',
+    'REACTOR_THREADPOOL_MAXSIZE': 20,
     # 'RETRY_ENABLED': False,
     'DOWNLOAD_TIMEOUT': 15,
     # 'REDIRECT_ENABLED': False,
     'AJAXCRAWL_ENABLED': True,
     'DEPTH_PRIORITY': 1,
-    # 'SCHEDULER_DISK_QUEUE': 'scrapy.squeues.PickleFifoDiskQueue',
-    # 'SCHEDULER_MEMORY_QUEUE': 'scrapy.squeues.FifoMemoryQueue',
+    'SCHEDULER_DISK_QUEUE': 'scrapy.squeues.PickleFifoDiskQueue',
+    'SCHEDULER_MEMORY_QUEUE': 'scrapy.squeues.FifoMemoryQueue',
     # 'LOG_FILE': 'crawler.log' # logging file
-    'FEED_EXPORTERS': {
-        'xlsx': 'scrapy_xlsx.XlsxItemExporter',
-    },
-    'FEEDS': {
-        f'{SAVE_DIRECTORY}/data.xlsx': {'format': 'xlsx'}
-    }
+    # 'FEED_EXPORTERS': {
+    #     'xlsx': 'scrapy_xlsx.XlsxItemExporter',
+    # },
+    # 'FEEDS': {
+    #     f'{SAVE_DIRECTORY}/data.xlsx': {'format': 'xlsx'}
+    # }
 }
 
 
@@ -122,7 +125,7 @@ class BroadCrawler(CrawlSpider):
             'origin': origin,
             'link': response.url, 
             'title': title,
-            'content': response.body.decode() #f"site_body/{filename}" #
+            'content': str(response.body) #f"site_body/{filename}" #
         }
 
 
