@@ -7,6 +7,7 @@ from sqlalchemy import create_engine
 from sqlalchemy import Column
 from sqlalchemy import Integer, Text
 from sqlalchemy.dialects.mysql import LONGTEXT
+from sqlalchemy.exc import DatabaseError
 
 
 Base = automap_base()
@@ -60,6 +61,10 @@ def bulk_insert(links:list):
     Table = config['table']
     
     with engine.connect() as connection:
-        connection.execute(Table.__table__.insert(), links)    
+        try:
+            connection.execute(Table.__table__.insert(), links)    
+        
+        except DatabaseError:
+            logging.info('Falha ao gravar dados :(')
 
     return True
