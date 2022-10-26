@@ -2,6 +2,7 @@ import os
 import re
 import time
 import multiprocessing
+import logging
 
 from functools import wraps, partial
 from scrapy.crawler import CrawlerProcess
@@ -10,6 +11,7 @@ from scrapy.linkextractors import LinkExtractor
 import pandas as pd
 import sys
 import warnings
+import uuid
 
 if not sys.warnoptions:
     warnings.simplefilter("ignore")
@@ -40,10 +42,6 @@ settings = {
     'SCHEDULER_DISK_QUEUE': 'scrapy.squeues.PickleFifoDiskQueue',
     'SCHEDULER_MEMORY_QUEUE': 'scrapy.squeues.FifoMemoryQueue',
     # 'LOG_FILE': 'crawler.log', # logging file
-    # 'FEED_EXPORTERS': {
-    #     'xlsx': 'scrapy_xlsx.XlsxItemExporter',toor
-
-    # },
     'FEEDS': {
         f'{SAVE_DIRECTORY}/data.csv': {'format': 'csv'}
     }
@@ -81,7 +79,7 @@ def get_base_domain(url:str):
     """
     return the base domain
     """
-    # return [ url.split('/')[2] for url in urls if url]
+
     if url.startswith('http') or url.startswith('https'):
         return url.split('/')[2]
     
@@ -98,9 +96,10 @@ def save_to_folder(content, filename:str, parts_dir:str='site_body'):
     with open(f"{SAVE_DIRECTORY}/{parts_dir}/{filename}.html", 'w') as html_file:
         try:
             html_file.write(content)
+            return True
 
         except Exception:
-            print('> Erro de inserção...')
+            logging.debug('> Erro de inserção...')
             return
 
 
@@ -145,25 +144,18 @@ class BroadCrawler(CrawlSpider):
 
 @execution_time
 def main():
-    # urls = ['https://www.morpheusmedspa.com', 'https://www.destinationaesthetics.com', 'https://www.dermacaresandiego.com', 'https://www.williamsfacialsurgery.com', 'https://www.williamsfacialsurgery.com/our-doctors/']
 
     website = read_links()
     urls = [ url for url in website if url != "Not Available" ]
 
-    #urls = urls[:10]
-
     print(f"{len(urls)} found!")
 
-    # if not os.path.exists(SAVE_DIRECTORY):
-    #     os.mkdir(SAVE_DIRECTORY)
-
-    # process = CrawlerProcess(settings)
-    # process.crawl(BroadCrawler, start_urls=urls, allowed_domains = [get_base_domain(url) for url in urls])
-    # process.start()
+    if not os.path.exists(SAVE_DIRECTORY):
+        os.mkdir(SAVE_DIRECTORY)
 
     with multiprocessing.Pool(5) as pool: #maxtasksperchild=1
-        pool.map(partial(spider_worker, BroadCrawler), urls)
-
+        results = pool.map_async(partial(spider_worker, BroadCrawler), urls)
+        results.get()
 
 
 if __name__ == "__main__":
