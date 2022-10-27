@@ -3,6 +3,7 @@ import re
 import time
 import multiprocessing
 import logging
+import urllib.parse
 
 from functools import wraps, partial
 from scrapy.crawler import CrawlerProcess
@@ -47,9 +48,18 @@ settings = {
     }
 }
 
+def base_url(url, with_path=False):
+    parsed = urllib.parse.urlparse(url)
+    path   = '/'.join(parsed.path.split('/')[:-1]) if with_path else ''
+    parsed = parsed._replace(path=path)
+    parsed = parsed._replace(params='')
+    parsed = parsed._replace(query='')
+    parsed = parsed._replace(fragment='')
+    return parsed.geturl()
 
-def read_links():
-    df = pd.read_excel('links.xlsx')
+
+def read_links(filename:str):
+    df = pd.read_excel(filename)
     return df['website'].tolist()
 
 
@@ -93,13 +103,15 @@ def save_to_folder(content, filename:str, parts_dir:str='site_body'):
     if not os.path.exists(f'{SAVE_DIRECTORY}/{parts_dir}'):
         os.makedirs(f'{SAVE_DIRECTORY}/{parts_dir}')
 
-    with open(f"{SAVE_DIRECTORY}/{parts_dir}/{filename}.html", 'w') as html_file:
+    filename = f"{SAVE_DIRECTORY}/{parts_dir}/{filename}.html"
+    with open(filename, 'w', encoding='utf8') as html_file:
         try:
             html_file.write(content)
             return True
 
-        except Exception:
-            logging.debug('> Erro de inserção...')
+        except Exception as error:
+            print(error)
+            os.remove(filename)
             return
 
 
@@ -127,15 +139,15 @@ class BroadCrawler(CrawlSpider):
 
         if response.status != 200 or response.body == "": return
 
-        origin = get_base_domain(response.url)
+        origin = base_url(response.url)
         title = response.css('title::text').get()
-        filename = f"{strip_ponctuation(origin)}_{strip_ponctuation(title)}"
+        filename = f"{get_base_domain(response.url)}_{str(uuid.uuid4())}" #f"{strip_ponctuation(origin)}_{strip_ponctuation(title)}"
         status = save_to_folder(response.text, filename)
-
+ 
         if not status: return
 
         yield {
-            'origin': origin,
+            'origin': f"{origin}",
             'link': response.url, 
             'title': title,
             'content': f"site_body/{filename}"
@@ -145,10 +157,12 @@ class BroadCrawler(CrawlSpider):
 @execution_time
 def main():
 
-    website = read_links()
-    urls = [ url for url in website if url != "Not Available" ]
+    website = read_links('links.xlsx')
+    urls = [ base_url(url.replace('/url?q=', '')) for url in website if url != "Not Available" ]
 
+    urls = urls[:10]
     print(f"{len(urls)} found!")
+    print(urls)
 
     if not os.path.exists(SAVE_DIRECTORY):
         os.mkdir(SAVE_DIRECTORY)
