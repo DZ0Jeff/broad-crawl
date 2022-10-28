@@ -13,6 +13,7 @@ import pandas as pd
 import sys
 import warnings
 import uuid
+from scrapper_boilerplate import TelegramBot
 
 if not sys.warnoptions:
     warnings.simplefilter("ignore")
@@ -147,7 +148,7 @@ class BroadCrawler(CrawlSpider):
         if not status: return
 
         yield {
-            'origin': f"{origin}",
+            'origin': origin,
             'link': response.url, 
             'title': title,
             'content': f"site_body/{filename}"
@@ -157,10 +158,10 @@ class BroadCrawler(CrawlSpider):
 @execution_time
 def main():
 
-    website = read_links('links.xlsx')
+    website = read_links('links-2.xlsx')
     urls = [ base_url(url.replace('/url?q=', '')) for url in website if url != "Not Available" ]
 
-    urls = urls[:10]
+    # urls = urls[:10]
     print(f"{len(urls)} found!")
     print(urls)
 
@@ -173,4 +174,18 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+
+    except Exception as error:
+        from dotenv import load_dotenv
+        import os
+
+        load_dotenv()
+
+        chat_id = os.getenv('CHAT_ID')
+        token = os.getenv('TELEGRAM_TOKEN')
+
+        telegram = TelegramBot()
+        telegram.send_message(str(error))
+        raise
