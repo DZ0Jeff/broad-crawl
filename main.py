@@ -13,7 +13,7 @@ import pandas as pd
 import sys
 import warnings
 import uuid
-from scrapper_boilerplate import TelegramBot
+from scrapper_boilerplate import TelegramBot, remove_duplicates_on_list
 
 if not sys.warnoptions:
     warnings.simplefilter("ignore")
@@ -30,9 +30,9 @@ settings = {
     # 'CONCURRENT_REQUESTS_PER_DOMAIN': 16, # default to 8
     # 'CONCURRENT_REQUESTS_PER_IP': 0, # default to 0
 
-    # 'ITEM_PIPELINES': {
-    #     'pipelines.LazyInsertPipeline': 100,
-    # },
+    'ITEM_PIPELINES': {
+        'pipelines.CSVCustomPipeline': 100,
+    },
     'COOKIES_ENABLED': False,
     'SCHEDULER_PRIORITY_QUEUE': 'scrapy.pqueues.DownloaderAwarePriorityQueue',
     'REACTOR_THREADPOOL_MAXSIZE': 20,
@@ -44,9 +44,9 @@ settings = {
     'SCHEDULER_DISK_QUEUE': 'scrapy.squeues.PickleFifoDiskQueue',
     'SCHEDULER_MEMORY_QUEUE': 'scrapy.squeues.FifoMemoryQueue',
     # 'LOG_FILE': 'crawler.log', # logging file
-    'FEEDS': {
-        f'{SAVE_DIRECTORY}/data.csv': {'format': 'csv'}
-    }
+    # 'FEEDS': {
+    #     f'{SAVE_DIRECTORY}/data.csv': {'format': 'csv'}
+    # }
 }
 
 def base_url(url, with_path=False):
@@ -161,9 +161,10 @@ def main():
     website = read_links('links-2.xlsx')
     urls = [ base_url(url.replace('/url?q=', '')) for url in website if url != "Not Available" ]
 
-    # urls = urls[:10]
+    urls = urls[:100]
+    urls = remove_duplicates_on_list(urls)
     print(f"{len(urls)} found!")
-    print(urls)
+
 
     if not os.path.exists(SAVE_DIRECTORY):
         os.mkdir(SAVE_DIRECTORY)
@@ -186,6 +187,6 @@ if __name__ == "__main__":
         chat_id = os.getenv('CHAT_ID')
         token = os.getenv('TELEGRAM_TOKEN')
 
-        telegram = TelegramBot()
+        telegram = TelegramBot(token, [chat_id])
         telegram.send_message(str(error))
         raise

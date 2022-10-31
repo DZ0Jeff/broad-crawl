@@ -1,5 +1,6 @@
 import os
 from models import bulk_insert
+from scrapper_boilerplate import dataToCSV
 
 
 class LazyInsertPipeline:
@@ -11,4 +12,11 @@ class LazyInsertPipeline:
 
     def process_item(self, item, spider):
         bulk_insert([item])
+        return item
+
+
+class CSVCustomPipeline:
+
+    def process_item(self, item, spider):
+        dataToCSV(item, "data/data.csv")
         return item
