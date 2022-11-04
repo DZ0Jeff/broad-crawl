@@ -13,7 +13,7 @@ import pandas as pd
 import sys
 import warnings
 import uuid
-from scrapper_boilerplate import TelegramBot, remove_duplicates_on_list
+from scrapper_boilerplate import TelegramBot, remove_duplicates_on_list, load_dynamic_page
 
 if not sys.warnoptions:
     warnings.simplefilter("ignore")
@@ -30,23 +30,26 @@ settings = {
     # 'CONCURRENT_REQUESTS_PER_DOMAIN': 16, # default to 8
     # 'CONCURRENT_REQUESTS_PER_IP': 0, # default to 0
 
-    'ITEM_PIPELINES': {
-        'pipelines.CSVCustomPipeline': 100,
+    # 'ITEM_PIPELINES': {
+    #     'pipelines.CSVCustomPipeline': 100,
+    # },
+    'DOWNLOADER_MIDDLEWARES': {
+        'middlewares.SeleniumMiddleware': 543,
     },
     'COOKIES_ENABLED': False,
     'SCHEDULER_PRIORITY_QUEUE': 'scrapy.pqueues.DownloaderAwarePriorityQueue',
     'REACTOR_THREADPOOL_MAXSIZE': 20,
-    'RETRY_ENABLED': False,
+    'RETRY_ENABLED': True,
     'DOWNLOAD_TIMEOUT': 15,
-    'REDIRECT_ENABLED': False,
+    'REDIRECT_ENABLED': True,
     'AJAXCRAWL_ENABLED': True,
     'DEPTH_PRIORITY': 1,
     'SCHEDULER_DISK_QUEUE': 'scrapy.squeues.PickleFifoDiskQueue',
     'SCHEDULER_MEMORY_QUEUE': 'scrapy.squeues.FifoMemoryQueue',
     # 'LOG_FILE': 'crawler.log', # logging file
-    # 'FEEDS': {
-    #     f'{SAVE_DIRECTORY}/data.csv': {'format': 'csv'}
-    # }
+    'FEEDS': {
+        f'{SAVE_DIRECTORY}/data.csv': {'format': 'csv'}
+    }
 }
 
 def base_url(url, with_path=False):
@@ -143,6 +146,7 @@ class BroadCrawler(CrawlSpider):
         origin = base_url(response.url)
         title = response.css('title::text').get()
         filename = f"{get_base_domain(response.url)}_{str(uuid.uuid4())}" #f"{strip_ponctuation(origin)}_{strip_ponctuation(title)}"
+        
         status = save_to_folder(response.text, filename)
  
         if not status: return
@@ -158,13 +162,12 @@ class BroadCrawler(CrawlSpider):
 @execution_time
 def main():
 
-    website = read_links('links-2.xlsx')
+    website = read_links('assets/links-2.xlsx')
+
     urls = [ base_url(url.replace('/url?q=', '')) for url in website if url != "Not Available" ]
 
-    urls = urls[:100]
     urls = remove_duplicates_on_list(urls)
     print(f"{len(urls)} found!")
-
 
     if not os.path.exists(SAVE_DIRECTORY):
         os.mkdir(SAVE_DIRECTORY)
