@@ -2,17 +2,18 @@ import os
 import re
 import time
 import multiprocessing
+import pandas as pd
 import logging
 import urllib.parse
+import argparse
+import sys
+import warnings
+import uuid
 
 from functools import wraps, partial
 from scrapy.crawler import CrawlerProcess
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
-import pandas as pd
-import sys
-import warnings
-import uuid
 from scrapper_boilerplate import TelegramBot, remove_duplicates_on_list, load_dynamic_page
 
 if not sys.warnoptions:
@@ -64,7 +65,7 @@ def base_url(url, with_path=False):
 
 def read_links(filename:str):
     df = pd.read_excel(filename)
-    return df['website'].tolist()
+    return df["website"].tolist()
 
 
 def execution_time(func):
@@ -160,36 +161,33 @@ class BroadCrawler(CrawlSpider):
 
 
 @execution_time
-def main():
+def main(process=3):
 
-    website = read_links('assets/links-2.xlsx')
+    # website = read_links('assets/links-2.xlsx')
 
-    urls = [ base_url(url.replace('/url?q=', '')) for url in website if url != "Not Available" ]
+    # urls = [ base_url(url.replace('/url?q=', '')) for url in website if url != "Not Available" ]
 
-    urls = remove_duplicates_on_list(urls)
+    # urls = remove_duplicates_on_list(urls)
+    urls = [
+        "http://www.azuramedicalspa.com/",
+        "https://www.getbodylase.com",
+        "http://www.azuraskin.com/",
+        "https://www.beautycoraleigh.com/",
+        "https://feelsynergy.com/",
+    ]
     print(f"{len(urls)} found!")
 
     if not os.path.exists(SAVE_DIRECTORY):
         os.mkdir(SAVE_DIRECTORY)
 
-    with multiprocessing.Pool(5) as pool: #maxtasksperchild=1
+    with multiprocessing.Pool(1) as pool: #maxtasksperchild=1
         results = pool.map_async(partial(spider_worker, BroadCrawler), urls)
         results.get()
 
+    # process = CrawlerProcess(settings)
+    # process.crawl(BroadCrawler, start_urls=urls, allowed_domains=[get_base_domain(url) for url in urls])
+    # process.start()
+
 
 if __name__ == "__main__":
-    try:
-        main()
-
-    except Exception as error:
-        from dotenv import load_dotenv
-        import os
-
-        load_dotenv()
-
-        chat_id = os.getenv('CHAT_ID')
-        token = os.getenv('TELEGRAM_TOKEN')
-
-        telegram = TelegramBot(token, [chat_id])
-        telegram.send_message(str(error))
-        raise
+    main()
