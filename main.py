@@ -19,7 +19,6 @@ from scrapper_boilerplate import TelegramBot, remove_duplicates_on_list, load_dy
 if not sys.warnoptions:
     warnings.simplefilter("ignore")
 
-
 # Programa rodou em 64 seconds
 SAVE_DIRECTORY = 'data'
 settings = {
@@ -34,9 +33,9 @@ settings = {
     # 'ITEM_PIPELINES': {
     #     'pipelines.CSVCustomPipeline': 100,
     # },
-    'DOWNLOADER_MIDDLEWARES': {
-        'middlewares.SeleniumMiddleware': 543,
-    },
+    # 'DOWNLOADER_MIDDLEWARES': {
+    #     'middlewares.SeleniumMiddleware': 543,
+    # },
     'COOKIES_ENABLED': False,
     'SCHEDULER_PRIORITY_QUEUE': 'scrapy.pqueues.DownloaderAwarePriorityQueue',
     'REACTOR_THREADPOOL_MAXSIZE': 20,
@@ -65,7 +64,7 @@ def base_url(url, with_path=False):
 
 def read_links(filename:str):
     df = pd.read_excel(filename)
-    return df["website"].tolist()
+    return df["Sites"].tolist()
 
 
 def execution_time(func):
@@ -90,15 +89,26 @@ def strip_ponctuation(text):
     return re.sub(u'[^a-zA-Z0-9áéíóúÁÉÍÓÚâêîôÂÊÎÔãõÃÕçÇ: ]', '_', text)
 
 
-def get_base_domain(url:str):
+def get_base_domain(url:str, partial=False):
     """
     return the base domain
     """
 
-    if url.startswith('http') or url.startswith('https'):
-        return url.split('/')[2]
-    
-    return url
+    if partial:
+        if url.startswith('http') or url.startswith('https') :
+            bases = url.split('//')[1].split('.')
+            
+            if "www" in url:
+                del bases[0]
+
+            joined =  ".".join(bases)
+            return joined.replace('/', '')
+
+    else:       
+        if url.startswith('http') or url.startswith('https'):
+            return url.split('/')[2]
+        
+        return url
 
 
 def save_to_folder(content, filename:str, parts_dir:str='site_body'):
@@ -120,11 +130,10 @@ def save_to_folder(content, filename:str, parts_dir:str='site_body'):
             return
 
 
-def spider_worker(spider, target_url:str):
-    urls = [target_url]
-    
+def spider_worker(spider, url:str):
+     
     process = CrawlerProcess(settings)
-    process.crawl(spider, start_urls=urls, allowed_domains = [get_base_domain(url) for url in urls])
+    process.crawl(spider, start_urls=[url], allowed_domains=[get_base_domain(url, partial=True)]) #allowed_domains=get_base_domain(url) 
     process.start()
 
     import sys
@@ -146,7 +155,7 @@ class BroadCrawler(CrawlSpider):
 
         origin = base_url(response.url)
         title = response.css('title::text').get()
-        filename = f"{get_base_domain(response.url)}_{str(uuid.uuid4())}" #f"{strip_ponctuation(origin)}_{strip_ponctuation(title)}"
+        filename = f"{get_base_domain(response.url)}_{str(uuid.uuid4())}"
         
         status = save_to_folder(response.text, filename)
  
@@ -161,26 +170,19 @@ class BroadCrawler(CrawlSpider):
 
 
 @execution_time
-def main(process=3):
+def main():
 
-    # website = read_links('assets/links-2.xlsx')
+    website = read_links('assets/pendentes.xlsx')
 
-    # urls = [ base_url(url.replace('/url?q=', '')) for url in website if url != "Not Available" ]
+    urls = website
 
-    # urls = remove_duplicates_on_list(urls)
-    urls = [
-        "http://www.azuramedicalspa.com/",
-        "https://www.getbodylase.com",
-        "http://www.azuraskin.com/",
-        "https://www.beautycoraleigh.com/",
-        "https://feelsynergy.com/",
-    ]
+    urls = remove_duplicates_on_list(urls)
     print(f"{len(urls)} found!")
 
     if not os.path.exists(SAVE_DIRECTORY):
         os.mkdir(SAVE_DIRECTORY)
 
-    with multiprocessing.Pool(1) as pool: #maxtasksperchild=1
+    with multiprocessing.Pool(5) as pool: #maxtasksperchild=1
         results = pool.map_async(partial(spider_worker, BroadCrawler), urls)
         results.get()
 
@@ -190,4 +192,18 @@ def main(process=3):
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+
+    except Exception as error:
+        from dotenv import load_dotenv
+        import os
+
+        load_dotenv()
+
+        chat_id = os.getenv('CHAT_ID')
+        token = os.getenv('TELEGRAM_TOKEN')
+
+        telegram = TelegramBot(token, [chat_id])
+        telegram.send_message(str(error))
+        raise
