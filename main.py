@@ -182,7 +182,7 @@ def main():
     if not os.path.exists(SAVE_DIRECTORY):
         os.mkdir(SAVE_DIRECTORY)
 
-    with multiprocessing.Pool(1) as pool: #maxtasksperchild=1
+    with multiprocessing.Pool(3) as pool: #maxtasksperchild=1
         results = pool.map_async(partial(spider_worker, BroadCrawler), urls)
         results.get()
 
