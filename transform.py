@@ -1,7 +1,7 @@
 import pandas as pd
 from scrapper_boilerplate import dataToCSV
 import urllib.parse
-
+import numpy as np
 
 # def base_url(url, with_path=False):
 #     parsed = urllib.parse.urlparse(url)
@@ -37,5 +37,12 @@ import urllib.parse
 #         continue
 
 df = pd.read_excel('assets/pendentes.xlsx')
+urls = df['Sites'].tolist()
 
-print(len(df) / 2)
+splited = np.array_split(urls, 2)
+
+for index, part in enumerate(splited):
+    print(list(part))
+    dataToCSV({ 'Sites': list(part) }, f'assets/pendente-{index}.csv')
+
+# print(splited)
