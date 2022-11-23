@@ -37,15 +37,16 @@ settings = {
     #     'middlewares.SeleniumMiddleware': 543,
     # },
     'COOKIES_ENABLED': False,
-    'SCHEDULER_PRIORITY_QUEUE': 'scrapy.pqueues.DownloaderAwarePriorityQueue',
-    'REACTOR_THREADPOOL_MAXSIZE': 20,
+    # 'SCHEDULER_PRIORITY_QUEUE': 'scrapy.pqueues.DownloaderAwarePriorityQueue',
+    # 'REACTOR_THREADPOOL_MAXSIZE': 20,
     'RETRY_ENABLED': True,
     'DOWNLOAD_TIMEOUT': 15,
     'REDIRECT_ENABLED': True,
     'AJAXCRAWL_ENABLED': True,
     'DEPTH_PRIORITY': 1,
-    'SCHEDULER_DISK_QUEUE': 'scrapy.squeues.PickleFifoDiskQueue',
-    'SCHEDULER_MEMORY_QUEUE': 'scrapy.squeues.FifoMemoryQueue',
+    'TELNETCONSOLE_PORT': None,
+    # 'SCHEDULER_DISK_QUEUE': 'scrapy.squeues.PickleFifoDiskQueue',
+    # 'SCHEDULER_MEMORY_QUEUE': 'scrapy.squeues.FifoMemoryQueue',
     # 'LOG_FILE': 'crawler.log', # logging file
     'FEEDS': {
         f'{SAVE_DIRECTORY}/data.csv': {'format': 'csv'}
