@@ -33,9 +33,9 @@ settings = {
     # 'ITEM_PIPELINES': {
     #     'pipelines.CSVCustomPipeline': 100,
     # },
-    # 'DOWNLOADER_MIDDLEWARES': {
-    #     'middlewares.SeleniumMiddleware': 543,
-    # },
+    'DOWNLOADER_MIDDLEWARES': {
+        'middlewares.SeleniumMiddleware': 543,
+    },
     'COOKIES_ENABLED': False,
     # 'SCHEDULER_PRIORITY_QUEUE': 'scrapy.pqueues.DownloaderAwarePriorityQueue',
     # 'REACTOR_THREADPOOL_MAXSIZE': 20,
@@ -64,7 +64,7 @@ def base_url(url, with_path=False):
 
 
 def read_links(filename:str):
-    df = pd.read_excel(filename)
+    df = pd.read_csv(filename)
     return df["Sites"].tolist()
 
 
@@ -173,7 +173,7 @@ class BroadCrawler(CrawlSpider):
 @execution_time
 def main():
 
-    website = read_links('assets/pendentes.xlsx')
+    website = read_links('assets/pendente-0.xlsx')
 
     urls = [f"https://{url}" for url in website ]
 
@@ -183,7 +183,7 @@ def main():
     if not os.path.exists(SAVE_DIRECTORY):
         os.mkdir(SAVE_DIRECTORY)
 
-    with multiprocessing.Pool(3) as pool: #maxtasksperchild=1
+    with multiprocessing.Pool(1) as pool: #maxtasksperchild=1
         results = pool.map_async(partial(spider_worker, BroadCrawler), urls)
         results.get()
 

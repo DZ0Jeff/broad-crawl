@@ -42,7 +42,7 @@ urls = df['Sites'].tolist()
 splited = np.array_split(urls, 2)
 
 for index, part in enumerate(splited):
-    print(list(part))
-    dataToCSV({ 'Sites': list(part) }, f'assets/pendente-{index}.csv')
+    for chunck in list(part):
+        dataToCSV({ 'Sites': chunck }, f'assets/pendente-{index}.csv')
 
 # print(splited)
