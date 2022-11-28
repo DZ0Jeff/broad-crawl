@@ -30,8 +30,8 @@ def send():
 if __name__ == "__main__":
     try:
         if sys.platform == "linux" or sys.platform == "linux2":
-            os.system('ulimit -n 10000000')
-            
+            os.system('ulimit -n 1000000')
+
         is_running_crawler.set_false()
         app.run(host="0.0.0.0")
 
