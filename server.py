@@ -1,3 +1,4 @@
+import os
 from flask import Flask, request, jsonify
 from flask_executor import Executor
 from time import sleep
@@ -28,6 +29,9 @@ def send():
 
 if __name__ == "__main__":
     try:
+        if sys.platform == "linux" or sys.platform == "linux2":
+            os.system('ulimit -n 10000000')
+            
         is_running_crawler.set_false()
         app.run(host="0.0.0.0")
 
