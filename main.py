@@ -25,7 +25,7 @@ if not sys.warnoptions:
 SAVE_DIRECTORY = 'data'
 settings = {
     'LOG_LEVEL': 'INFO',
-    'DEPTH_LIMIT': 2,
+    'DEPTH_LIMIT': 3,
     'USER_AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)', 
     # descomentar aqui se usar o recurso de insert a cada x dados
     'CONCURRENT_REQUESTS': 100, # default to 16
@@ -54,6 +54,11 @@ settings = {
         f'{SAVE_DIRECTORY}/data.csv': {'format': 'csv'}
     }
 }
+
+def save_error(link):
+    with open('error.txt', 'a') as file_error:
+        file_error.write(f"{link}\n")
+
 
 def base_url(url, with_path=False):
     parsed = urllib.parse.urlparse(url)
@@ -136,7 +141,7 @@ def save_to_folder(content, filename:str, parts_dir:str='site_body'):
 def spider_worker(spider, url:str):
      
     process = CrawlerProcess(settings)
-    process.crawl(spider, start_urls=[url], allowed_domains=[get_base_domain(url, partial=True)]) #allowed_domains=get_base_domain(url) 
+    process.crawl(spider, start_urls=[url]) # allowed_domains=[get_base_domain(url, partial=True)] 
     process.start()
 
     import sys
@@ -162,7 +167,9 @@ class BroadCrawler(CrawlSpider):
         
         status = save_to_folder(response.text, filename)
  
-        if not status: return
+        if not status: 
+            save_error(response.url)
+            return
 
         yield {
             'origin': origin,
