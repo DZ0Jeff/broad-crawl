@@ -1,0 +1,1 @@
+git pull; ulimit -n 1000000; source venv/bin/activate; python server.py

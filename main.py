@@ -25,7 +25,7 @@ if not sys.warnoptions:
 SAVE_DIRECTORY = 'data'
 settings = {
     'LOG_LEVEL': 'INFO',
-    'DEPTH_LIMIT': 3,
+    'DEPTH_LIMIT': 2,
     'USER_AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)', 
     # descomentar aqui se usar o recurso de insert a cada x dados
     'CONCURRENT_REQUESTS': 100, # default to 16
@@ -154,8 +154,8 @@ def spider_worker(spider, url:str):
 class BroadCrawler(CrawlSpider):
     name = 'broad_crawler'
     
-    ignore=['#','/search/','/busca/','q=']
-    rules = [ Rule (LinkExtractor(deny=(ignore)), callback="parse_link",  follow=True),]
+    # ignore=['#','/search/','/busca/','q=']
+    rules = [ Rule (LinkExtractor(), callback="parse_link",  follow=True),]
 
     def parse_link(self, response):
 
@@ -192,13 +192,13 @@ def main_handler(urls):
     if not os.path.exists(SAVE_DIRECTORY):
         os.mkdir(SAVE_DIRECTORY)
 
-    with multiprocessing.Pool(PROCESS) as pool: #maxtasksperchild=1
-        results = pool.map_async(partial(spider_worker, BroadCrawler), urls)
-        results.get()
+    # with multiprocessing.Pool(PROCESS) as pool: #maxtasksperchild=1
+    #     results = pool.map_async(partial(spider_worker, BroadCrawler), urls)
+    #     results.get()
 
-    # process = CrawlerProcess(settings)
-    # process.crawl(BroadCrawler, start_urls=urls, allowed_domains=[get_base_domain(url) for url in urls])
-    # process.start()
+    process = CrawlerProcess(settings)
+    process.crawl(BroadCrawler, start_urls=urls) # allowed_domains=[get_base_domain(url) for url in urls]
+    process.start()
 
 
 # if __name__ == "__main__":
