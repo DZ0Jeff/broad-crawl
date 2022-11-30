@@ -192,13 +192,13 @@ def main_handler(urls):
     if not os.path.exists(SAVE_DIRECTORY):
         os.mkdir(SAVE_DIRECTORY)
 
-    # with multiprocessing.Pool(PROCESS) as pool: #maxtasksperchild=1
-    #     results = pool.map_async(partial(spider_worker, BroadCrawler), urls)
-    #     results.get()
+    with multiprocessing.Pool(PROCESS) as pool: #maxtasksperchild=1
+        results = pool.map_async(partial(spider_worker, BroadCrawler), urls)
+        results.get()
 
-    process = CrawlerProcess(settings)
-    process.crawl(BroadCrawler, start_urls=urls) # allowed_domains=[get_base_domain(url) for url in urls]
-    process.start()
+    # process = CrawlerProcess(settings)
+    # process.crawl(BroadCrawler, start_urls=urls) # allowed_domains=[get_base_domain(url) for url in urls]
+    # process.start()
 
 
 # if __name__ == "__main__":
