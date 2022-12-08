@@ -72,7 +72,7 @@ def base_url(url, with_path=False):
 
 def read_links(filename:str):
     df = pd.read_excel(filename)
-    return df["Site corrigido"].tolist()
+    return df["website_corrigido"].tolist()
 
 
 def execution_time(func):
