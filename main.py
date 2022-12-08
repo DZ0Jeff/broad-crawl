@@ -35,9 +35,9 @@ settings = {
     # 'ITEM_PIPELINES': {
     #     'pipelines.CSVCustomPipeline': 100,
     # },
-    'DOWNLOADER_MIDDLEWARES': {
-        'middlewares.SeleniumMiddleware': 543,
-    },
+    # 'DOWNLOADER_MIDDLEWARES': {
+    #     'middlewares.SeleniumMiddleware': 543,
+    # },
     'COOKIES_ENABLED': False,
     # 'SCHEDULER_PRIORITY_QUEUE': 'scrapy.pqueues.DownloaderAwarePriorityQueue',
     # 'REACTOR_THREADPOOL_MAXSIZE': 20,
@@ -61,18 +61,22 @@ def save_error(link):
 
 
 def base_url(url, with_path=False):
-    parsed = urllib.parse.urlparse(url)
-    path   = '/'.join(parsed.path.split('/')[:-1]) if with_path else ''
-    parsed = parsed._replace(path=path)
-    parsed = parsed._replace(params='')
-    parsed = parsed._replace(query='')
-    parsed = parsed._replace(fragment='')
-    return parsed.geturl()
+    try:
+        parsed = urllib.parse.urlparse(url)
+        path   = '/'.join(parsed.path.split('/')[:-1]) if with_path else ''
+        parsed = parsed._replace(path=path)
+        parsed = parsed._replace(params='')
+        parsed = parsed._replace(query='')
+        parsed = parsed._replace(fragment='')
+        return parsed.geturl()
+
+    except Exception as error:
+        return
 
 
 def read_links(filename:str):
     df = pd.read_excel(filename)
-    return df["website_corrigido"].tolist()
+    return df["website"].tolist()
 
 
 def execution_time(func):
@@ -184,9 +188,10 @@ def main_handler():
 
     website = read_links('assets/sites_faltantes_2.xlsx')
 
-    urls = [base_url(url) for url in website ]
+    urls = [base_url(url) for url in website if url ]
+    urls = website
 
-    # urls = remove_duplicates_on_list(urls)
+    urls = remove_duplicates_on_list(urls)
     print(f"{len(urls)} found!")
 
     if not os.path.exists(SAVE_DIRECTORY):
@@ -207,6 +212,7 @@ if __name__ == "__main__":
         main_handler()
 
     except Exception as error:
+        raise
         from dotenv import load_dotenv
         import os
 
